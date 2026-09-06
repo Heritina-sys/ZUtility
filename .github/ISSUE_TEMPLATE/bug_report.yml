@@ -1,0 +1,106 @@
+name: Bug report
+description: Something in the collector behaves incorrectly
+title: "fix: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report security vulnerabilities here — follow
+        [SECURITY.md](https://github.com/Heritina-sys/ZUtility/blob/master/SECURITY.md).
+
+        Several known issues are already documented in
+        [README § Known limitations](https://github.com/Heritina-sys/ZUtility#known-limitations),
+        including the 1 ms poll loop, the broken `/api/Device/sync` endpoint, and
+        state loss on restart. Please check there first.
+
+        COM and SDK setup problems are covered in
+        [docs/DEVICE-SDK.md § Troubleshooting](https://github.com/Heritina-sys/ZUtility/blob/master/docs/DEVICE-SDK.md#troubleshooting).
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - COM interop / SDK registration
+        - Device connection (Connect_Net fails)
+        - Reading punches (no logs returned)
+        - Punch pairing (wrong check-in/check-out)
+        - Push to ZKAPI
+        - HTTP endpoints
+        - Startup / DI
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens
+      description: Observed behaviour, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: |
+        Steps to reproduce. For pairing bugs, the punch sequence matters —
+        give the timestamps and enroll numbers involved.
+      placeholder: |
+        1. Employee 35 punches at 07:52:14
+        2. Same employee punches at 07:54:30
+        3. Expected: second punch dropped (within 300 s window)
+        4. Actual: second punch closed the session
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: |
+        Relevant console output. `AttendanceWorker` logs per-device connection
+        results and per-punch events. Redact real employee names.
+      render: text
+
+  - type: input
+    id: devices
+    attributes:
+      label: Terminal model and count
+      placeholder: "e.g. 3 × ZKTeco K40, or: no physical devices"
+    validations:
+      required: true
+
+  - type: input
+    id: sdk
+    attributes:
+      label: zkemkeeper SDK version
+      placeholder: "e.g. 6.3.4.8"
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "e.g. Windows 11 23H2"
+    validations:
+      required: true
+
+  - type: input
+    id: dotnet
+    attributes:
+      label: .NET version
+      placeholder: "dotnet --version"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked README § Known limitations and docs/DEVICE-SDK.md § Troubleshooting
+          required: true
+        - label: My report contains no real employee names or customer network details
+          required: true

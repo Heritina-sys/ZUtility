@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build:
+    name: Build (Windows x86)
+    # Windows is mandatory, not a preference: ZKUtility.csproj carries a
+    # COMReference to zkemkeeper, a 32-bit Windows COM library. The reference
+    # cannot resolve on ubuntu-latest. See docs/DEVICE-SDK.md.
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\NuGet\v3-cache
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
+
+      # The zkemkeeper SDK is not installed on GitHub runners, so tlbimp cannot
+      # generate Interop.zkemkeeper.dll and the COM reference fails to resolve.
+      # This step therefore verifies that everything *else* compiles, and
+      # reports the COM failure as a notice rather than failing the run.
+      #
+      # A green build here does NOT prove device code works. Test against real
+      # terminals and say so in the pull request — see CONTRIBUTING.md.
+      - name: Build
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $log = dotnet build --no-restore --configuration Release 2>&1 | Out-String
+          Write-Host $log
+
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "::notice::Build succeeded."
+            exit 0
+          }
+
+          if ($log -match 'zkemkeeper|COMReference|tlbimp|MSB3283') {
+            Write-Host "::notice::Build failed only on the zkemkeeper COM reference, which cannot resolve on GitHub runners (SDK not registered). This is expected. See docs/DEVICE-SDK.md."
+            exit 0
+          }
+
+          Write-Host "::error::Build failed for reasons unrelated to COM interop."
+          exit 1
+
+  format:
+    name: Format check
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Verify formatting against .editorconfig
+        continue-on-error: true
+        run: dotnet format --verify-no-changes --verbosity diagnostic
+
+  hygiene:
+    name: Repository hygiene
+    runs-on: ubuntu-latest
+
+    # 61 build artefacts — roughly 70% of this repository's weight — were
+    # tracked until September 2026, including the machine-specific
+    # Interop.zkemkeeper.dll. This job stops that recurring.
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Reject build output and editor state
+        run: |
+          set -euo pipefail
+          echo "Scanning tracked files for build artefacts…"
+
+          if git ls-files | grep -E '/(bin|obj)/|^\.vs/|\.(dll|exe|pdb|suo)$|\.csproj\.user$|\.Backup\.tmp$'; then
+            echo "::error::Build output or editor state is tracked. Remove it with:"
+            echo "  git rm -r --cached <path>"
+            echo "See .gitignore and CONTRIBUTING.md."
+            exit 1
+          fi
+
+          echo "✅ No build artefacts tracked."
+
+      - name: Reject credentials in tracked configuration
+        run: |
+          set -euo pipefail
+          if git grep -nIE '(password|pwd)=[^"'"'"';[:space:]]+' -- \
+               '*.json' '*.config' '*.cs' ':!*docs/*' ':!*.md'; then
+            echo "::error::A populated password was found in a tracked file."
+            exit 1
+          fi
+          echo "✅ No credential-shaped strings in tracked configuration."

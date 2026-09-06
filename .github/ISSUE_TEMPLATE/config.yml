@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Heritina-sys/ZUtility/security/advisories/new
+    about: Report privately. Never in a public issue — see SECURITY.md.
+  - name: SDK setup and COM troubleshooting
+    url: https://github.com/Heritina-sys/ZUtility/blob/master/docs/DEVICE-SDK.md#troubleshooting
+    about: Registration failures, BadImageFormatException, Connect_Net returning false.
+  - name: Architecture and pairing logic
+    url: https://github.com/Heritina-sys/ZUtility/blob/master/docs/ARCHITECTURE.md
+    about: How punches become sessions, and which state survives a restart.
+  - name: API and database (ZKAPI)
+    url: https://github.com/Heritina-sys/ZKAPI/issues
+    about: Issues about storage, endpoints or the MySQL schema belong there.
+  - name: Dashboard (FrontZK)
+    url: https://github.com/Heritina-sys/FrontZK/issues
+    about: Issues about the web interface belong there.

@@ -1,0 +1,77 @@
+name: Feature request
+description: Suggest a capability or an improvement
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ZUtility talks to a real ZKTeco device over its SDK. Before proposing a
+        change, read the
+        [pairing-logic questions](https://github.com/Heritina-sys/ZUtility/blob/master/CONTRIBUTING.md)
+        in CONTRIBUTING.md — several behaviours that look like bugs (the 1 ms
+        poll loop, pushing every row on every tick) were chosen to cope with how
+        the device actually behaves, and "fixing" them can silently stop
+        attendance from being recorded.
+
+        Also check [README § Known limitations](https://github.com/Heritina-sys/ZUtility#known-limitations)
+        in case it is already listed.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve
+      description: >
+        Describe the situation, not the implementation. What cannot be done
+        today?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Where does this land
+      options:
+        - ZUtility (device ↔ API collector) — this repo
+        - The REST push target (ZKAPI) must change first
+        - The device itself (SDK capability question)
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you have in mind
+    validations:
+      required: true
+
+  - type: dropdown
+    id: data-loss-risk
+    attributes:
+      label: Could this change lose attendance data?
+      description: >
+        The collector is a data-loss-prone layer: pushes have no acknowledgement,
+        and restarting can re-push rows the device already cleared.
+      options:
+        - No — device behaviour untouched
+        - Yes, possibly — the design must preserve the current guarantees
+        - Not sure — someone who owns a device should weigh in
+    validations:
+      required: true
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: How would you test it
+      description: >
+        This repo needs a real ZKTeco device (or its SDK), which CI does not
+        have. What would verify this works?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to open a pull request for this
